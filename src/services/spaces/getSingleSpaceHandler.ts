@@ -3,20 +3,18 @@ import {
     APIGatewayProxyResult, 
     Context } from "aws-lambda";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { postSpace } from "./PostSpace";
-import { getSpaces } from "./GetSpaces";
+import { getSingleSpace } from "./GetSingleSpace";
 
 
-async function handler(event: APIGatewayProxyEvent, context: Context): Promise<APIGatewayProxyResult> {
+async function getSingleSpaceHandler(event: APIGatewayProxyEvent, context: Context): Promise<APIGatewayProxyResult> {
+    
     console.log(event);
     const dbClient = new DynamoDBClient({});
     let message: string;
     try{
         switch(event.httpMethod){
         case 'GET':
-            return getSpaces(event, dbClient);
-        case 'POST':
-            return postSpace(event, dbClient);
+            return getSingleSpace(event, dbClient);
         default:
             break;
         }
@@ -24,7 +22,7 @@ async function handler(event: APIGatewayProxyEvent, context: Context): Promise<A
     catch (error:any){
         return {
             statusCode: 500,
-            body: JSON.stringify(error.message)
+            body: JSON.stringify('internal error')
         }
     };
 
@@ -35,4 +33,4 @@ async function handler(event: APIGatewayProxyEvent, context: Context): Promise<A
     return response;
 };
 
-export {handler}
+export {getSingleSpaceHandler}

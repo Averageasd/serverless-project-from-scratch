@@ -1,8 +1,6 @@
 import { Stack, StackProps} from 'aws-cdk-lib';
-import { AttributeType, ITable, Table } from 'aws-cdk-lib/aws-dynamodb';
+import { AttributeType, BillingMode, ITable, Table } from 'aws-cdk-lib/aws-dynamodb';
 import { Construct } from 'constructs';
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { QueryCommand, QueryCommandInput } from '@aws-sdk/client-dynamodb';
 
 export class DataStack extends Stack {
 
@@ -14,7 +12,9 @@ export class DataStack extends Stack {
             partitionKey:{
                 name: 'id',
                 type: AttributeType.STRING
-            }
+            },
+            billingMode: BillingMode.PAY_PER_REQUEST, // On-Demand capacity mode
+
         });
     }
 }

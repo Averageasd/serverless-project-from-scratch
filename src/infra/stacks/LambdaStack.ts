@@ -14,6 +14,7 @@ interface LambdaStackProp extends StackProps {
 export class LambdaStack extends Stack {
 
     public readonly spacesLambdaIntegration!: LambdaIntegration;
+    public readonly getSingleSpaceLambdaIntegration!: LambdaIntegration;
 
     constructor(scope: Construct, id: string, props: LambdaStackProp){
         super(scope, id, props);
@@ -27,12 +28,32 @@ export class LambdaStack extends Stack {
             }
         });
 
-        spacesLambda.addToRolePolicy(new PolicyStatement({
-            effect: Effect.ALLOW,
-            actions:['*'],
-            resources:['*']
-        }));
+        const getSingleSpaceLambda = new NodejsFunction(this, 'GetSingleSpaceLambda', {
+             runtime: Runtime.NODEJS_22_X,
+             handler: 'getSingleSpaceHandler',
+             entry: (join(__dirname, '..', '..', 'services', 'spaces', 'getSingleSpaceHandler.ts')),
+             environment: {
+                TABLE_NAME: props.spaceTable.tableName
+            }
+        });
+
+        spacesLambda.addToRolePolicy(
+            new PolicyStatement({
+                effect: Effect.ALLOW,
+                actions:['*'],
+                resources:['*']
+            }
+        ));
+
+        getSingleSpaceLambda.addToRolePolicy(
+            new PolicyStatement({
+                effect: Effect.ALLOW,
+                actions:['*'],
+                resources:['*']
+            }
+        ));
 
         this.spacesLambdaIntegration = new LambdaIntegration(spacesLambda);
+        this.getSingleSpaceLambdaIntegration = new LambdaIntegration(getSingleSpaceLambda);
     }
 }
