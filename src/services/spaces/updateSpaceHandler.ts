@@ -3,21 +3,23 @@ import {
     APIGatewayProxyResult, 
     Context } from "aws-lambda";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { getSingleSpace } from "./GetSingleSpace";
+import { putSpace } from "./PutSpace";
 
 
-async function getSingleSpaceHandler(event: APIGatewayProxyEvent, context: Context): Promise<APIGatewayProxyResult> {
+async function updateSingleSpaceHandler(
+    event: APIGatewayProxyEvent, 
+    context: Context): Promise<APIGatewayProxyResult> {
     
     const dbClient = new DynamoDBClient({});
     try{
-        return getSingleSpace(event, dbClient);
+        return putSpace(event, dbClient);
     }
     catch (error:any){
         return {
             statusCode: 500,
-            body: JSON.stringify('internal error')
+            body: JSON.stringify(error.message)
         }
     };
 };
 
-export {getSingleSpaceHandler}
+export {updateSingleSpaceHandler}

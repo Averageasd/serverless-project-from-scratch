@@ -1,4 +1,5 @@
 import { DynamoDBClient, ExecuteStatementCommand} from "@aws-sdk/client-dynamodb";
+import { unmarshall } from "@aws-sdk/util-dynamodb";
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 
 export async function getSpaces(event: APIGatewayProxyEvent, dbClient: DynamoDBClient): Promise<APIGatewayProxyResult>{
@@ -9,10 +10,9 @@ export async function getSpaces(event: APIGatewayProxyEvent, dbClient: DynamoDBC
     };
     const getSpacesCommand = new ExecuteStatementCommand(params);
     const result = await dbClient.send(getSpacesCommand);
-    const response: APIGatewayProxyResult = {
+    const unmarshallSpaces: Record<string, any>[] = result.Items.map(item => unmarshall(item));
+    return {
         statusCode: 200,
-        body: JSON.stringify(result.Items)  
-    }
-    console.log(response);
-    return response;
+        body: JSON.stringify(unmarshallSpaces)
+    } as APIGatewayProxyResult;
 }

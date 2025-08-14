@@ -1,5 +1,5 @@
 import { DynamoDBClient, ExecuteStatementCommand} from "@aws-sdk/client-dynamodb";
-import { Parameter } from "aws-cdk-lib/aws-appconfig";
+import { unmarshall } from "@aws-sdk/util-dynamodb";
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 
 export async function getSingleSpace(event: APIGatewayProxyEvent, dbClient: DynamoDBClient): Promise<APIGatewayProxyResult>{
@@ -16,9 +16,18 @@ export async function getSingleSpace(event: APIGatewayProxyEvent, dbClient: Dyna
     };
     const getSingleSpaceCommand = new ExecuteStatementCommand(params);
     const result = await dbClient.send(getSingleSpaceCommand);
-    const response: APIGatewayProxyResult = {
-        statusCode: 200,
-        body: JSON.stringify(result.Items)  
+
+    if (result.Items){
+        const unmarshalledSpace: Record<string,any>
+        = result.Items.map(item => unmarshall(item))[0];
+        return {
+             statusCode: 200,
+            body: JSON.stringify(unmarshalledSpace)  
+        } as APIGatewayProxyResult
     }
-    return response;
+
+    return {
+             statusCode: 404,
+            body: JSON.stringify(`Space with id ${id} not found!`)  
+        } as APIGatewayProxyResult
 }

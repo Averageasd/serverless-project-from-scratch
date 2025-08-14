@@ -1,46 +1,64 @@
-import {Stack, StackProps} from 'aws-cdk-lib';
+import {IResource, Stack, StackProps} from 'aws-cdk-lib';
 import { LambdaIntegration, Resource, RestApi } from 'aws-cdk-lib/aws-apigateway';
 import { Construct } from 'constructs';
+
+
 
 interface ApiStackProps extends StackProps {
     spacesLambdaIntegration: LambdaIntegration;
     getSingleSpaceLambdaIntegration: LambdaIntegration;
+    updateSingleSpaceLambdaIntegration: LambdaIntegration;
+}
+
+interface Api {
+    path: string,
+    methods: string[],
+    lambdas: LambdaIntegration[]
 }
 
 export class ApiStack extends Stack {
     constructor(scope: Construct, id: string, props: ApiStackProps){
         super(scope, id, props);
 
-        const paths = [
+        const spaceApiPaths: Api[] = [
             {
                 path: '',
-                method : 'GET',
-                lambda: props.spacesLambdaIntegration
-            },
-            {
-                path: '',
-                method: 'POST',
-                lambda: props.spacesLambdaIntegration
+                methods : ['GET', 'POST'],
+                lambdas: [props.spacesLambdaIntegration, props.spacesLambdaIntegration]
             },
             {
                 path: '{id}',
-                method: 'GET',
-                lambda: props.getSingleSpaceLambdaIntegration
-            }
+                methods: ['GET', 'PUT'],
+                lambdas: [props.getSingleSpaceLambdaIntegration, props.updateSingleSpaceLambdaIntegration]
+            },
         ]
 
         // represent api group
-        const api = new RestApi(this, 'SpaceApi');
+        const spaceApi = new RestApi(this, 'SpaceApi');
+        const spaceRootResource = spaceApi.root.addResource('spaces');
+        this.setupApi(spaceRootResource, spaceApiPaths);
+    }
 
-        const rootRes: Resource = api.root.addResource('spaces');
-
+    setupApi(rootResource: Resource, paths: Api[]): void {
         for (const pathPair of paths) {
-            let apiPath: Resource = pathPair.path === '' ? rootRes : rootRes.addResource(pathPair.path);
-            apiPath.addMethod(pathPair.method, pathPair.lambda);
+            const pathSegments = pathPair.path.split('/');
+            let apiPath: Resource = rootResource;
+            this.buildPathHelper(apiPath, pathPair, pathSegments);
         }
     }
 
-    //     rootRes.addMethod('GET', props.spacesLambdaIntegration);
-    //     rootRes.addMethod('POST', props.spacesLambdaIntegration);
-    // }
+    buildPathHelper(apiPath: Resource, pathSetup: Api, segments: string[]) : void {
+        for (const segment of segments){
+            if (apiPath.getResource(segment) || segment.trim() === ''){
+                continue;
+            }
+            apiPath = apiPath.addResource(segment);
+        }
+
+        console.log(apiPath.path);
+        
+        for (let i = 0; i < pathSetup.methods.length;i++){
+            apiPath.addMethod(pathSetup.methods[i], pathSetup.lambdas[i]);
+        }
+    }
 }

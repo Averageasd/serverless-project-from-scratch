@@ -15,6 +15,7 @@ export class LambdaStack extends Stack {
 
     public readonly spacesLambdaIntegration!: LambdaIntegration;
     public readonly getSingleSpaceLambdaIntegration!: LambdaIntegration;
+    public readonly updateSingleSpaceLambdaIntegration!: LambdaIntegration;
 
     constructor(scope: Construct, id: string, props: LambdaStackProp){
         super(scope, id, props);
@@ -29,13 +30,22 @@ export class LambdaStack extends Stack {
         });
 
         const getSingleSpaceLambda = new NodejsFunction(this, 'GetSingleSpaceLambda', {
-             runtime: Runtime.NODEJS_22_X,
-             handler: 'getSingleSpaceHandler',
-             entry: (join(__dirname, '..', '..', 'services', 'spaces', 'getSingleSpaceHandler.ts')),
-             environment: {
+            runtime: Runtime.NODEJS_22_X,
+            handler: 'getSingleSpaceHandler',
+            entry: (join(__dirname, '..', '..', 'services', 'spaces', 'getSingleSpaceHandler.ts')),
+            environment: {
                 TABLE_NAME: props.spaceTable.tableName
             }
         });
+
+        const updateSingleSpaceLambda = new NodejsFunction(this, 'UpdateSingleSpaceLambda', {
+            runtime: Runtime.NODEJS_22_X,
+            handler: 'updateSingleSpaceHandler',
+            entry: (join(__dirname, '..', '..', 'services', 'spaces', 'updateSpaceHandler.ts')),
+            environment: {
+                TABLE_NAME: props.spaceTable.tableName
+            }
+        })
 
         spacesLambda.addToRolePolicy(
             new PolicyStatement({
@@ -53,7 +63,16 @@ export class LambdaStack extends Stack {
             }
         ));
 
+        updateSingleSpaceLambda.addToRolePolicy(
+            new PolicyStatement({
+                effect: Effect.ALLOW,
+                actions:['*'],
+                resources:['*']
+            }
+        ));
+
         this.spacesLambdaIntegration = new LambdaIntegration(spacesLambda);
         this.getSingleSpaceLambdaIntegration = new LambdaIntegration(getSingleSpaceLambda);
+        this.updateSingleSpaceLambdaIntegration = new LambdaIntegration(updateSingleSpaceLambda);
     }
 }
