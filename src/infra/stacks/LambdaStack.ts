@@ -16,6 +16,7 @@ export class LambdaStack extends Stack {
     public readonly spacesLambdaIntegration!: LambdaIntegration;
     public readonly getSingleSpaceLambdaIntegration!: LambdaIntegration;
     public readonly updateSingleSpaceLambdaIntegration!: LambdaIntegration;
+    public readonly deleteSpaceLambdaIntegration!: LambdaIntegration;
 
     constructor(scope: Construct, id: string, props: LambdaStackProp){
         super(scope, id, props);
@@ -45,7 +46,16 @@ export class LambdaStack extends Stack {
             environment: {
                 TABLE_NAME: props.spaceTable.tableName
             }
-        })
+        });
+
+        const deleteSpaceLambda = new NodejsFunction(this, 'DeleteSpaceLambda', {
+            runtime: Runtime.NODEJS_22_X,
+            handler: 'deleteSpaceHandler',
+            entry: (join(__dirname, '..', '..', 'services', 'spaces', 'deleteSpaceHandler.ts')),
+            environment: {
+                TABLE_NAME: props.spaceTable.tableName
+            }
+        });
 
         spacesLambda.addToRolePolicy(
             new PolicyStatement({
@@ -71,8 +81,17 @@ export class LambdaStack extends Stack {
             }
         ));
 
+        deleteSpaceLambda.addToRolePolicy(
+            new PolicyStatement({
+                effect: Effect.ALLOW,
+                actions:['*'],
+                resources:['*']
+            }
+        ));
+
         this.spacesLambdaIntegration = new LambdaIntegration(spacesLambda);
         this.getSingleSpaceLambdaIntegration = new LambdaIntegration(getSingleSpaceLambda);
         this.updateSingleSpaceLambdaIntegration = new LambdaIntegration(updateSingleSpaceLambda);
+        this.deleteSpaceLambdaIntegration = new LambdaIntegration(deleteSpaceLambda);
     }
 }

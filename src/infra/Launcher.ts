@@ -11,5 +11,6 @@ const lambdaStack = new LambdaStack(app, 'LambdaStack', {
 new ApiStack(app, 'ApiStack', {
     spacesLambdaIntegration: lambdaStack.spacesLambdaIntegration,
     getSingleSpaceLambdaIntegration: lambdaStack.getSingleSpaceLambdaIntegration,
-    updateSingleSpaceLambdaIntegration: lambdaStack.updateSingleSpaceLambdaIntegration
+    updateSingleSpaceLambdaIntegration: lambdaStack.updateSingleSpaceLambdaIntegration,
+    deleteSpaceLambdaIntegration : lambdaStack.deleteSpaceLambdaIntegration
 });

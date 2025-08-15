@@ -8,6 +8,8 @@ interface ApiStackProps extends StackProps {
     spacesLambdaIntegration: LambdaIntegration;
     getSingleSpaceLambdaIntegration: LambdaIntegration;
     updateSingleSpaceLambdaIntegration: LambdaIntegration;
+    deleteSpaceLambdaIntegration: LambdaIntegration;
+    
 }
 
 interface Api {
@@ -23,13 +25,25 @@ export class ApiStack extends Stack {
         const spaceApiPaths: Api[] = [
             {
                 path: '',
-                methods : ['GET', 'POST'],
-                lambdas: [props.spacesLambdaIntegration, props.spacesLambdaIntegration]
+                methods : [
+                    'GET', 
+                    'POST'],
+                lambdas: [
+                    props.spacesLambdaIntegration, 
+                    props.spacesLambdaIntegration]
             },
             {
                 path: '{id}',
-                methods: ['GET', 'PUT'],
-                lambdas: [props.getSingleSpaceLambdaIntegration, props.updateSingleSpaceLambdaIntegration]
+                methods: [
+                    'GET', 
+                    'PUT', 
+                    'DELETE'
+                ],
+                lambdas: [
+                    props.getSingleSpaceLambdaIntegration, 
+                    props.updateSingleSpaceLambdaIntegration, 
+                    props.deleteSpaceLambdaIntegration
+                ]
             },
         ]
 
