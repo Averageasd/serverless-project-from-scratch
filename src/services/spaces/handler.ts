@@ -5,6 +5,7 @@ import {
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { postSpace } from "./PostSpace";
 import { getSpaces } from "./GetSpaces";
+import { MissingFieldError } from "../shared/Validator";
 
 
 async function handler(event: APIGatewayProxyEvent, context: Context): Promise<APIGatewayProxyResult> {
@@ -22,6 +23,12 @@ async function handler(event: APIGatewayProxyEvent, context: Context): Promise<A
         }
     }
     catch (error:any){
+        if (error instanceof MissingFieldError){
+            return {
+                statusCode: 400,
+                body: JSON.stringify(error.message)
+            }
+        }
         return {
             statusCode: 500,
             body: JSON.stringify(error.message)

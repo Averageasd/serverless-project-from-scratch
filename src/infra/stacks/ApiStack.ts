@@ -1,5 +1,6 @@
-import {IResource, Stack, StackProps} from 'aws-cdk-lib';
-import { LambdaIntegration, Resource, RestApi } from 'aws-cdk-lib/aws-apigateway';
+import { Stack, StackProps } from 'aws-cdk-lib';
+import { AuthorizationType, CognitoUserPoolsAuthorizer, LambdaIntegration, MethodOptions, Resource, RestApi } from 'aws-cdk-lib/aws-apigateway';
+import { IUserPool } from 'aws-cdk-lib/aws-cognito';
 import { Construct } from 'constructs';
 
 
@@ -9,6 +10,7 @@ interface ApiStackProps extends StackProps {
     getSingleSpaceLambdaIntegration: LambdaIntegration;
     updateSingleSpaceLambdaIntegration: LambdaIntegration;
     deleteSpaceLambdaIntegration: LambdaIntegration;
+    userPool: IUserPool;
     
 }
 
@@ -49,19 +51,33 @@ export class ApiStack extends Stack {
 
         // represent api group
         const spaceApi = new RestApi(this, 'SpaceApi');
+        const authorizer = new CognitoUserPoolsAuthorizer(this, 'SpacesApiAuthorizer',{
+            cognitoUserPools: [props.userPool],
+            identitySource: 'method.request.header.Authorization'
+        });
+
+        authorizer._attachToApi(spaceApi);
+        
+        const optionsWithAuth: MethodOptions = {
+            authorizationType: AuthorizationType.COGNITO,
+            authorizer: {
+                authorizerId: authorizer.authorizerId
+            }
+        };
+
         const spaceRootResource = spaceApi.root.addResource('spaces');
-        this.setupApi(spaceRootResource, spaceApiPaths);
+        this.setupApi(spaceRootResource, spaceApiPaths, optionsWithAuth);
     }
 
-    setupApi(rootResource: Resource, paths: Api[]): void {
+    setupApi(rootResource: Resource, paths: Api[], optionsWithAuth: MethodOptions): void {
         for (const pathPair of paths) {
             const pathSegments = pathPair.path.split('/');
             let apiPath: Resource = rootResource;
-            this.buildPathHelper(apiPath, pathPair, pathSegments);
+            this.buildPathHelper(apiPath, pathPair, pathSegments, optionsWithAuth);
         }
     }
 
-    buildPathHelper(apiPath: Resource, pathSetup: Api, segments: string[]) : void {
+    buildPathHelper(apiPath: Resource, pathSetup: Api, segments: string[], optionsWithAuth: MethodOptions) : void {
         for (const segment of segments){
             if (apiPath.getResource(segment) || segment.trim() === ''){
                 continue;
@@ -72,7 +88,7 @@ export class ApiStack extends Stack {
         console.log(apiPath.path);
         
         for (let i = 0; i < pathSetup.methods.length;i++){
-            apiPath.addMethod(pathSetup.methods[i], pathSetup.lambdas[i]);
+            apiPath.addMethod(pathSetup.methods[i], pathSetup.lambdas[i], optionsWithAuth);
         }
     }
 }
