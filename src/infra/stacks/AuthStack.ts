@@ -1,16 +1,23 @@
 import { Stack, StackProps } from "aws-cdk-lib";
-import { UserPool, UserPoolClient } from "aws-cdk-lib/aws-cognito";
+import { CfnIdentityPool, CfnUserPoolGroup, UserPool, UserPoolClient } from "aws-cdk-lib/aws-cognito";
+import { CfnUserGroup } from "aws-cdk-lib/aws-elasticache";
+import { FederatedPrincipal, Role } from "aws-cdk-lib/aws-iam";
 import { Construct } from "constructs";
 
 export class AuthStack extends Stack {
 
     public userPool: UserPool;
     private userPoolClient: UserPoolClient;
+    private identityPool: CfnIdentityPool;
+    private authenticatedRole: Role;
+    private unauthenticatedRole: Role;
 
     constructor(scope: Construct, id: string, props?: StackProps){
         super(scope, id, props);
         this.createUserPool();
         this.createUserPoolClient();
+        this.createAdminsGroup();
+        this.createIdentityPool();
     }
 
     private createUserPool(): void {
@@ -18,7 +25,7 @@ export class AuthStack extends Stack {
             selfSignUpEnabled: true,
             signInAliases:{
                 username: true,
-                email: true
+                email: true,
             }
         });
     }   
@@ -33,4 +40,37 @@ export class AuthStack extends Stack {
             }
         });
     }
+
+    private createAdminsGroup(): void {
+        new CfnUserPoolGroup(this, 'SpaceAdmins', {
+            userPoolId: this.userPool.userPoolId,
+            groupName: 'admins'
+        });
+    }
+
+    private createIdentityPool(): void {
+        this.identityPool = new CfnIdentityPool(this, 'spaceIdentityPool', {
+            allowUnauthenticatedIdentities: true,
+            cognitoIdentityProviders: [{
+                clientId: this.userPoolClient.userPoolClientId,
+                providerName: this.userPool.userPoolProviderName
+            }]
+        });
+    }
+
+    private createRoles(): void {
+        this.authenticatedRole = new Role(this, 'CognitoDefaultAuthenticatedRole', {
+            assumedBy: new FederatedPrincipal('cognito-identity.amazonaws.com', {
+                StringEquals: {
+                    'cognito-identity.amazonaws.com:aud': this.identityPool.ref,
+                },
+                'ForAnyValue:StringLike': {
+                    'cognito-identity.amazonaws.com:amr': 'authenticated'
+                }
+            },
+            'sts:AssumeRoleWithWebIdentity'
+        )
+        })
+    }
+
 }
