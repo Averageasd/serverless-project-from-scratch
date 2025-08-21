@@ -19,6 +19,7 @@ export class AuthStack extends Stack {
         this.createAdminsGroup();
         this.createIdentityPool();
         this.createRoles();
+        this.attachRoles();
     }
 
     private createUserPool(): void {
@@ -105,6 +106,14 @@ export class AuthStack extends Stack {
             identityPoolId: this.identityPool.ref,
             roles:{
                 'authenticated':this.authenticatedRole.roleArn,
+                'unauthenticated':this.unauthenticatedRole.roleArn,
+            },
+            roleMappings:{
+                adminsMapping: {
+                    type: 'Token',
+                    ambiguousRoleResolution:'AuthenticatedRole',
+                    identityProvider: `${this.userPool.userPoolProviderName}:${this.userPoolClient.userPoolClientId}`
+                }
             }
         });
     }
