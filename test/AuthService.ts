@@ -34,14 +34,18 @@ export class AuthService {
         return authSession.tokens?.idToken.toString();
     }
 
-    public async generateTemporaryCredentials(): Promise<void>{
+    public async generateTemporaryCredentials(){
         const idToken = await this.getIdToken();
         const cognitoIdentityPool = `cognito-idp.${awsRegion}.amazonaws.com/us-east-1_13OprXwIG`;
         const cognitoIdentity = new CognitoIdentityClient({
             credentials:fromCognitoIdentityPool({
-                identityPoolId:'us-east-1:c3f74f29-61ef-4c61-9f1b-418b5ec38e43'
+                identityPoolId:'us-east-1:c3f74f29-61ef-4c61-9f1b-418b5ec38e43',
+                logins:{
+                    [cognitoIdentityPool]:idToken
+                }
             })
         });
-        
+        const credentials = await cognitoIdentity.config.credentials();
+        return credentials;
     }
 }

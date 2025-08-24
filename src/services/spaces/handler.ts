@@ -6,18 +6,22 @@ import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { postSpace } from "./PostSpace";
 import { getSpaces } from "./GetSpaces";
 import { MissingFieldError } from "../shared/Validator";
+import { addCorsHeader } from "../shared/AddCORS";
 
 
 async function handler(event: APIGatewayProxyEvent, context: Context): Promise<APIGatewayProxyResult> {
     console.log(event);
     const dbClient = new DynamoDBClient({});
+    let response: APIGatewayProxyResult;
     let message: string;
     try{
         switch(event.httpMethod){
         case 'GET':
-            return getSpaces(event, dbClient);
+            response = await getSpaces(event, dbClient);
+            addCorsHeader(response);
         case 'POST':
-            return postSpace(event, dbClient);
+            response = await postSpace(event, dbClient);
+            addCorsHeader(response);
         default:
             break;
         }
@@ -35,10 +39,12 @@ async function handler(event: APIGatewayProxyEvent, context: Context): Promise<A
         }
     };
 
-    const response: APIGatewayProxyResult = {
+    response =  {
         statusCode: 200,
         body: JSON.stringify(`action is ${message}`)
-    }
+    } as APIGatewayProxyResult;
+    addCorsHeader(response);
+    
     return response;
 };
 
