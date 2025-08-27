@@ -19,9 +19,11 @@ async function handler(event: APIGatewayProxyEvent, context: Context): Promise<A
         case 'GET':
             response = await getSpaces(event, dbClient);
             addCorsHeader(response);
+            return response;
         case 'POST':
             response = await postSpace(event, dbClient);
             addCorsHeader(response);
+            return response;
         default:
             break;
         }

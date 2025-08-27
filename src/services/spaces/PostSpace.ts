@@ -27,6 +27,9 @@ export async function postSpace(event: APIGatewayProxyEvent, dbClient: DynamoDBC
             },
             name: {
                 S: item.name
+            },
+            photoUrl: {
+                S: item.photoUrl
             }
         },
         ReturnConsumedCapacity: "TOTAL",
